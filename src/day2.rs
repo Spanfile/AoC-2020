@@ -15,7 +15,7 @@ pub fn generator(input: &str) -> Vec<PasswordEntry> {
             let args = s.split_whitespace().collect::<Vec<&str>>();
             let (a, b) = args[0]
                 .split_once('-')
-                .map(|(l, r)| (l.parse().unwrap(), r.parse::<usize>().unwrap()))
+                .map(|(l, r)| (l.parse().unwrap(), r.parse().unwrap()))
                 .unwrap();
             let req = args[1].chars().next().unwrap();
             let pass = args[2].to_string();
