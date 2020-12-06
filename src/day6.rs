@@ -29,6 +29,6 @@ pub fn part1(groups: &[(usize, HashMap<char, usize>)]) -> usize {
 pub fn part2(groups: &[(usize, HashMap<char, usize>)]) -> usize {
     groups
         .iter()
-        .map(|(people, answers)| answers.values().filter(|count| **count == *people).count())
+        .map(|(people, answers)| answers.values().filter(|count| *count == people).count())
         .sum()
 }
