@@ -8,6 +8,16 @@ pub enum Opcode {
     Nop(i32),
 }
 
+impl Opcode {
+    fn flip(self) -> Self {
+        match self {
+            Opcode::Jmp(val) => Opcode::Nop(val),
+            Opcode::Nop(val) => Opcode::Jmp(val),
+            _ => self,
+        }
+    }
+}
+
 #[aoc_generator(day8)]
 pub fn generator(input: &str) -> Vec<Opcode> {
     input
@@ -52,58 +62,45 @@ pub fn part1(input: &[Opcode]) -> i32 {
 }
 
 #[aoc(day8, part2)]
-pub fn part2(input: &[Opcode]) -> i32 {
-    let mut to_search = vec![630..=634];
-    let mut candidates = HashSet::new();
+pub fn part2(original: &[Opcode]) -> i32 {
+    let mut input = original.to_vec();
+    let mut flip_history = HashSet::new();
 
-    while let Some(search) = to_search.pop() {
-        for (idx, opcode) in input.iter().enumerate() {
-            match opcode {
-                Opcode::Jmp(val) | Opcode::Nop(val) => {
-                    if search.contains(&(val + idx as i32)) {
-                        if !candidates.insert(idx) {
-                            continue;
-                        }
-
-                        println!("candidate: {:?} at idx {}", opcode, idx);
-
-                        let end = idx as i32;
-                        for i in 1i32.. {
-                            if let Opcode::Jmp(_) = input[(end - i) as usize] {
-                                let start = end - i + 1;
-                                to_search.push(start..=end);
-                                break;
-                            }
-                        }
-                    }
-                }
-                _ => (),
-            }
-        }
-    }
-
-    'outer: for c in candidates {
-        let mut opcodes = input.to_vec();
-        match opcodes[c] {
-            Opcode::Jmp(val) => opcodes[c] = Opcode::Nop(val),
-            Opcode::Nop(val) => opcodes[c] = Opcode::Jmp(val),
-            _ => (),
-        }
-
+    'outer: loop {
+        let mut idx: i32 = 0;
         let mut visited = HashSet::new();
-        let mut idx = 0i32;
+        let mut history = Vec::new();
         let mut acc = 0;
 
         loop {
             if visited.contains(&idx) {
+                // found a loop, backtrack and flip the most recent not-already-tried-to-swap jmp or nop
+                while let Some(recent) = history.pop() {
+                    match input[recent as usize] {
+                        Opcode::Jmp(_) | Opcode::Nop(_) => {
+                            if !flip_history.insert(recent) {
+                                // this one's been tried, try the next one
+                                continue;
+                            }
+
+                            // reset the input, flip the instruction
+                            input = original.to_vec();
+                            input[recent as usize] = input[recent as usize].flip();
+                            break;
+                        }
+                        _ => (),
+                    }
+                }
+
                 continue 'outer;
             }
 
-            if idx >= opcodes.len() as i32 {
-                break;
+            if idx >= input.len() as i32 {
+                break 'outer acc;
             }
 
             visited.insert(idx);
+            history.push(idx);
             match input[idx as usize] {
                 Opcode::Acc(val) => acc += val,
                 Opcode::Jmp(val) => {
@@ -115,9 +112,5 @@ pub fn part2(input: &[Opcode]) -> i32 {
 
             idx += 1;
         }
-
-        return acc;
     }
-
-    0
 }
