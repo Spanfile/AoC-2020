@@ -40,29 +40,26 @@ pub fn part1(input: &[usize]) -> usize {
 pub fn part2(input: &[usize]) -> usize {
     let target = 15690279;
     let mut start = 0;
+    let mut end = 0;
+    let mut sum = 0;
 
-    let (smallest, largest) = 'outer: loop {
-        let mut sum = 0;
-        let mut smallest = usize::MAX;
-        let mut largest = 0;
-
-        for v in input.iter().skip(start) {
-            if *v > largest {
-                largest = *v;
-            } else if *v < smallest {
-                smallest = *v;
+    loop {
+        match sum.cmp(&target) {
+            Ordering::Equal => break,
+            Ordering::Less => {
+                sum += input[end];
+                end += 1;
             }
-
-            sum += v;
-            match sum.cmp(&target) {
-                Ordering::Equal => break 'outer (smallest, largest),
-                Ordering::Greater => break,
-                _ => (),
+            Ordering::Greater => {
+                sum -= input[start];
+                start += 1;
             }
         }
+    }
 
-        start += 1;
-    };
-
-    smallest + largest
+    input[start..end]
+        .iter()
+        .max()
+        .and_then(|max| input[start..end].iter().min().map(|min| min + max))
+        .unwrap()
 }
