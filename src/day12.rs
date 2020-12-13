@@ -107,22 +107,8 @@ pub fn part2(input: &[Action]) -> i64 {
             Action::South(dist) => w_y += dist,
             Action::East(dist) => w_x += dist,
             Action::West(dist) => w_x -= dist,
-            Action::TurnLeft(deg) => {
-                let deg = -*deg as f64 * PI / 180f64;
-                let s = deg.sin();
-                let c = deg.cos();
-
-                w_x = (w_x as f64 * c - w_y as f64 * s).round() as i64;
-                w_y = (w_x as f64 * s + w_y as f64 * c).round() as i64;
-            }
-            Action::TurnRight(deg) => {
-                let deg = *deg as f64 * PI / 180f64;
-                let s = deg.sin();
-                let c = deg.cos();
-
-                w_x = (w_x as f64 * c - w_y as f64 * s).round() as i64;
-                w_y = (w_x as f64 * s + w_y as f64 * c).round() as i64;
-            }
+            Action::TurnLeft(deg) => (w_x, w_y) = rotate_point(w_x, w_y, -deg),
+            Action::TurnRight(deg) => (w_x, w_y) = rotate_point(w_x, w_y, *deg),
             Action::Forward(dist) => {
                 x += dist * w_x;
                 y += dist * w_y;
@@ -131,4 +117,13 @@ pub fn part2(input: &[Action]) -> i64 {
     }
 
     x.abs() + y.abs()
+}
+
+fn rotate_point(x: i64, y: i64, deg: i64) -> (i64, i64) {
+    match deg {
+        90 | -270 => (-y, x),
+        -90 | 270 => (y, -x),
+        180 | -180 => (-x, -y),
+        _ => panic!(),
+    }
 }

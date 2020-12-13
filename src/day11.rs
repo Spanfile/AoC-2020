@@ -34,7 +34,6 @@ pub fn generator(input: &str) -> (Vec<Seat>, i32, i32) {
 #[aoc(day11, part1)]
 pub fn part1(input: &(Vec<Seat>, i32, i32)) -> usize {
     let (mut seats, w, h) = input.clone();
-    let mut count = 0;
 
     loop {
         let mut changes = false;

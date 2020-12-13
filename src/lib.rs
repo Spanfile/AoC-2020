@@ -1,4 +1,5 @@
 #![feature(str_split_once)]
+#![feature(destructuring_assignment)]
 
 use aoc_runner_derive::aoc_lib;
 
