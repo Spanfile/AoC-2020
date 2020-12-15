@@ -8,6 +8,15 @@ pub fn generator(input: &str) -> Vec<i32> {
 
 #[aoc(day15, part1)]
 pub fn part1(input: &[i32]) -> i32 {
+    solve(input, 2020)
+}
+
+#[aoc(day15, part2)]
+pub fn part2(input: &[i32]) -> i32 {
+    solve(input, 30000000)
+}
+
+fn solve(input: &[i32], upper: usize) -> i32 {
     let mut numbers = input
         .iter()
         .enumerate()
@@ -15,7 +24,7 @@ pub fn part1(input: &[i32]) -> i32 {
         .collect::<HashMap<_, _>>();
     let mut last_number = *input.last().unwrap();
 
-    for turn in input.len() + 1..=2020 {
+    for turn in input.len() + 1..=upper {
         let (times_spoken, last_spoken) = *numbers.get(&last_number).unwrap();
         if times_spoken == 1 {
             // println!("turn {}: {} has been spoken only once, saying 0", turn, last_number);
@@ -41,10 +50,4 @@ pub fn part1(input: &[i32]) -> i32 {
     }
 
     last_number
-}
-
-#[aoc(day15, part2)]
-pub fn part2(_: &[i32]) -> u64 {
-    // change the turn bound above to 30000000 instead of 2020
-    0
 }
