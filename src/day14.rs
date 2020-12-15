@@ -1,5 +1,4 @@
 use aoc_runner_derive::{aoc, aoc_generator};
-use itertools::Itertools;
 use std::collections::HashMap;
 
 #[derive(Debug)]
@@ -64,7 +63,7 @@ pub fn part1(input: &[Operation]) -> u64 {
 pub fn part2(input: &[Operation]) -> u64 {
     let mut memory = HashMap::new();
     let mut mask_ones = 0;
-    let mut masks = Vec::new();
+    let mut mask_floating = 0;
 
     for op in input {
         match op {
@@ -74,24 +73,16 @@ pub fn part2(input: &[Operation]) -> u64 {
                 floating,
             } => {
                 mask_ones = *ones;
-
-                let bit_indices = (0..36).filter(|b| (floating >> b & 1) == 1).collect::<Vec<u64>>();
-                masks.clear();
-                for i in 1..=bit_indices.len() {
-                    for c in bit_indices.iter().combinations(i) {
-                        let mut mask = 0;
-                        for b in c {
-                            mask |= 1 << *b;
-                        }
-                        masks.push(mask);
-                    }
-                }
+                mask_floating = *floating;
             }
             Operation::Mem { addr, val } => {
-                let addr = *addr as u64 | mask_ones;
+                let addr = (*addr as u64 | mask_ones) & !mask_floating;
                 memory.insert(addr, *val);
-                for mask in &masks {
+
+                let mut mask = mask_floating;
+                while mask > 0 {
                     memory.insert(addr | mask, *val);
+                    mask = (mask - 1) & mask_floating;
                 }
             }
         }
