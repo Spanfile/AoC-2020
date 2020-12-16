@@ -1,5 +1,6 @@
 #![feature(str_split_once)]
 #![feature(destructuring_assignment)]
+#![feature(hash_drain_filter)]
 
 use aoc_runner_derive::aoc_lib;
 
@@ -10,6 +11,7 @@ pub mod day12;
 pub mod day13;
 pub mod day14;
 pub mod day15;
+pub mod day16;
 pub mod day2;
 pub mod day3;
 pub mod day4;
