@@ -1,6 +1,5 @@
-use std::{collections::HashMap, ops::RangeInclusive};
-
 use aoc_runner_derive::{aoc, aoc_generator};
+use std::{collections::HashMap, ops::RangeInclusive};
 
 pub struct Field {
     name: String,
