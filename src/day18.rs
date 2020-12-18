@@ -44,18 +44,14 @@ impl Expression {
             t => panic!(format!("unexpected token {:?}", t)),
         };
 
-        loop {
-            let peek_precedence = match tokens.peek() {
+        while precedence
+            < match tokens.peek() {
                 Some(Token::Addition) => rules.add,
                 Some(Token::Multiplication) => rules.mul,
                 Some(Token::OpenParentheses) => rules.group,
                 _ => 0,
-            };
-
-            if precedence >= peek_precedence {
-                break;
             }
-
+        {
             lhs = match tokens.peek() {
                 Some(Token::Addition) => Expression::Addition {
                     lhs: Box::new(lhs),
