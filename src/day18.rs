@@ -90,13 +90,15 @@ pub fn generator(input: &str) -> Vec<Vec<Token>> {
         .lines()
         .map(|l| {
             l.chars()
-                .filter_map(|c| match c {
-                    '+' => Some(Token::Addition),
-                    '*' => Some(Token::Multiplication),
-                    '(' => Some(Token::OpenParentheses),
-                    ')' => Some(Token::CloseParentheses),
-                    c if c.is_digit(10) => Some(Token::Numeric(c.to_digit(10).unwrap() as u64)),
-                    _ => None,
+                .filter_map(|c| {
+                    match c {
+                        '+' => Some(Token::Addition),
+                        '*' => Some(Token::Multiplication),
+                        '(' => Some(Token::OpenParentheses),
+                        ')' => Some(Token::CloseParentheses),
+                        c if let Some(digit) = c.to_digit(10) => Some(Token::Numeric(digit as u64)),
+                        _ => None,
+                    }
                 })
                 .collect()
         })
