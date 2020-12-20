@@ -1,11 +1,10 @@
 use aoc_runner_derive::{aoc, aoc_generator};
 use std::collections::HashMap;
 
-#[derive(Debug)]
+#[derive(Debug, Clone)]
 pub enum Rule {
     Character(char),
-    SingleOther(usize),
-    TwoOthers(usize, usize),
+    All(Vec<usize>),
     Or(Box<Rule>, Box<Rule>),
 }
 
@@ -13,13 +12,15 @@ impl Rule {
     fn matches(&self, message: &mut (impl Iterator<Item = char> + Clone), rules: &HashMap<usize, Rule>) -> bool {
         match self {
             Rule::Character(c) => matches!(message.next(), Some(next) if *c == next),
-            Rule::SingleOther(rule) => rules.get(rule).unwrap().matches(message, rules),
-            Rule::TwoOthers(left, right) => {
-                rules.get(left).unwrap().matches(message, rules) && rules.get(right).unwrap().matches(message, rules)
-            }
+            Rule::All(rl) => rl.iter().all(|r| rules.get(r).unwrap().matches(message, rules)),
             Rule::Or(left, right) => {
                 let mut message_clone = message.clone();
-                left.matches(message, rules) || right.matches(&mut message_clone, rules)
+                if left.matches(&mut message_clone, rules) {
+                    *message = message_clone;
+                    true
+                } else {
+                    right.matches(message, rules)
+                }
             }
         }
     }
@@ -39,10 +40,8 @@ pub fn generator(input: &str) -> (HashMap<usize, Rule>, Vec<String>) {
                     Rule::Or(Box::new(parse_rule(left)), Box::new(parse_rule(right)))
                 } else if let Some(c) = rule.strip_prefix('"').and_then(|s| s.strip_suffix('"')) {
                     Rule::Character(c.chars().next().unwrap())
-                } else if let Some((first, second)) = rule.split_once(' ') {
-                    Rule::TwoOthers(first.parse().unwrap(), second.parse().unwrap())
                 } else {
-                    Rule::SingleOther(rule.parse().unwrap())
+                    Rule::All(rule.split(' ').map(|r| r.parse().unwrap()).collect())
                 }
             }
 
@@ -56,14 +55,39 @@ pub fn generator(input: &str) -> (HashMap<usize, Rule>, Vec<String>) {
 #[aoc(day19, part1)]
 pub fn part1(input: &(HashMap<usize, Rule>, Vec<String>)) -> usize {
     let (rules, messages) = input;
-    let rule_0 = rules.get(&0).unwrap();
-    messages
-        .iter()
-        .filter(|m| rule_0.matches(&mut m.chars(), rules))
-        .count()
+    count_matches(rules, messages)
 }
 
 #[aoc(day19, part2)]
-pub fn part2(input: &(HashMap<usize, Rule>, Vec<String>)) -> i32 {
-    0
+pub fn part2(input: &(HashMap<usize, Rule>, Vec<String>)) -> usize {
+    let (rules, messages) = input;
+    let mut rules = rules.clone();
+    // 8: 42 | 42 8
+    // 11: 42 31 | 42 11 31
+    rules.insert(
+        8,
+        Rule::Or(Box::new(Rule::All(vec![42])), Box::new(Rule::All(vec![42, 8]))),
+    );
+    rules.insert(
+        11,
+        Rule::Or(Box::new(Rule::All(vec![42, 31])), Box::new(Rule::All(vec![42, 11, 31]))),
+    );
+
+    count_matches(&rules, messages)
+}
+
+fn count_matches(rules: &HashMap<usize, Rule>, messages: &[String]) -> usize {
+    let rule_0 = rules.get(&0).unwrap();
+    messages
+        .iter()
+        .filter(|m| {
+            let mut chars = m.chars();
+            let matches = rule_0.matches(&mut chars, rules);
+            if chars.next().is_none() {
+                matches
+            } else {
+                false
+            }
+        })
+        .count()
 }
