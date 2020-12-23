@@ -1,6 +1,5 @@
-use std::collections::HashMap;
-
 use aoc_runner_derive::{aoc, aoc_generator};
+use std::collections::HashMap;
 
 #[derive(Debug)]
 pub struct Tile {
