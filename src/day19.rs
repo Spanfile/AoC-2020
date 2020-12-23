@@ -1,5 +1,5 @@
 use aoc_runner_derive::{aoc, aoc_generator};
-use std::collections::HashMap;
+use std::{collections::HashMap, iter::Peekable};
 
 #[derive(Debug, Clone)]
 pub enum Rule {
@@ -9,17 +9,38 @@ pub enum Rule {
 }
 
 impl Rule {
-    fn matches(&self, message: &mut (impl Iterator<Item = char> + Clone), rules: &HashMap<usize, Rule>) -> bool {
+    fn matches(
+        &self,
+        message: &mut Peekable<impl Iterator<Item = char> + Clone>,
+        rules: &HashMap<usize, Rule>,
+        flipped: bool,
+    ) -> bool {
         match self {
-            Rule::Character(c) => matches!(message.next(), Some(next) if *c == next),
-            Rule::All(rl) => rl.iter().all(|r| rules.get(r).unwrap().matches(message, rules)),
+            Rule::Character(c) => match message.peek() {
+                Some(n) if c == n => {
+                    message.next();
+                    true
+                }
+                _ => false,
+            },
+            Rule::All(rl) => {
+                if !flipped {
+                    rl.iter()
+                        .all(|r| rules.get(r).unwrap().matches(message, rules, flipped))
+                } else {
+                    rl.iter()
+                        .rev()
+                        .all(|r| rules.get(r).unwrap().matches(message, rules, flipped))
+                }
+            }
             Rule::Or(left, right) => {
+                let (left, right) = if flipped { (right, left) } else { (left, right) };
                 let mut message_clone = message.clone();
-                if left.matches(&mut message_clone, rules) {
+                if left.matches(&mut message_clone, rules, flipped) {
                     *message = message_clone;
                     true
                 } else {
-                    right.matches(message, rules)
+                    right.matches(message, rules, flipped)
                 }
             }
         }
@@ -61,19 +82,34 @@ pub fn part1(input: &(HashMap<usize, Rule>, Vec<String>)) -> usize {
 #[aoc(day19, part2)]
 pub fn part2(input: &(HashMap<usize, Rule>, Vec<String>)) -> usize {
     let (rules, messages) = input;
-    let mut rules = rules.clone();
-    // 8: 42 | 42 8
-    // 11: 42 31 | 42 11 31
-    rules.insert(
-        8,
-        Rule::Or(Box::new(Rule::All(vec![42])), Box::new(Rule::All(vec![42, 8]))),
-    );
-    rules.insert(
-        11,
-        Rule::Or(Box::new(Rule::All(vec![42, 31])), Box::new(Rule::All(vec![42, 11, 31]))),
-    );
+    let rule_42 = rules.get(&42).unwrap();
+    let rule_31 = rules.get(&31).unwrap();
 
-    count_matches(&rules, messages)
+    let mut matched = 0;
+    'msg: for msg in messages {
+        let mut chars_rev = msg.chars().rev().peekable();
+
+        let mut matched_31 = 0;
+        while rule_31.matches(&mut chars_rev, rules, true) {
+            matched_31 += 1;
+        }
+
+        for _ in 0..matched_31 {
+            if !rule_42.matches(&mut chars_rev, rules, true) {
+                continue 'msg;
+            }
+        }
+
+        while rule_42.matches(&mut chars_rev, rules, true) {}
+
+        if chars_rev.next().is_some() {
+            continue 'msg;
+        }
+
+        matched += 1;
+    }
+
+    matched
 }
 
 fn count_matches(rules: &HashMap<usize, Rule>, messages: &[String]) -> usize {
@@ -81,8 +117,8 @@ fn count_matches(rules: &HashMap<usize, Rule>, messages: &[String]) -> usize {
     messages
         .iter()
         .filter(|m| {
-            let mut chars = m.chars();
-            let matches = rule_0.matches(&mut chars, rules);
+            let mut chars = m.chars().peekable();
+            let matches = rule_0.matches(&mut chars, rules, false);
             if chars.next().is_none() {
                 matches
             } else {
